@@ -6,9 +6,10 @@ interface CarListProps {
   cars: Car[];
   onEdit: (car: Car) => void;
   onDelete: (ids: string[]) => void;
+  isDealer: boolean;
 }
 
-export function CarList({ cars, onEdit, onDelete }: CarListProps) {
+export function CarList({ cars, onEdit, onDelete, isDealer }: CarListProps) {
   const [selectedCars, setSelectedCars] = useState<string[]>([]);
 
   const toggleSelect = (id: string) => {
@@ -21,7 +22,7 @@ export function CarList({ cars, onEdit, onDelete }: CarListProps) {
 
   return (
     <div className="space-y-4">
-      {selectedCars.length > 0 && (
+      {isDealer && selectedCars.length > 0 && (
         <div className="flex justify-end">
           <button
             onClick={() => onDelete(selectedCars)}
@@ -36,12 +37,14 @@ export function CarList({ cars, onEdit, onDelete }: CarListProps) {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {cars.map((car) => (
           <div key={car.id} className="relative bg-white rounded-lg shadow-md overflow-hidden">
-            <input
-              type="checkbox"
-              checked={selectedCars.includes(car.id)}
-              onChange={() => toggleSelect(car.id)}
-              className="absolute top-2 right-2 h-4 w-4"
-            />
+            {isDealer && (
+              <input
+                type="checkbox"
+                checked={selectedCars.includes(car.id)}
+                onChange={() => toggleSelect(car.id)}
+                className="absolute top-2 right-2 h-4 w-4"
+              />
+            )}
             
             <img
               src={car.image}
@@ -64,13 +67,15 @@ export function CarList({ cars, onEdit, onDelete }: CarListProps) {
                 ))}
               </ul>
 
-              <button
-                onClick={() => onEdit(car)}
-                className="mt-4 flex items-center text-blue-600 hover:text-blue-900"
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit Details
-              </button>
+              {isDealer && (
+                <button
+                  onClick={() => onEdit(car)}
+                  className="mt-4 flex items-center text-blue-600 hover:text-blue-900"
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit Details
+                </button>
+              )}
             </div>
           </div>
         ))}
