@@ -1,15 +1,24 @@
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
-import { Car, ShieldCheck, UserCircle, LogOut } from 'lucide-react';
+import { Car, ShieldCheck, UserCircle } from 'lucide-react';
 import { AuthForm } from './components/auth/AuthForm';
 import { CarForm } from './components/car/CarForm';
 import { CarList } from './components/car/CarList';
 import { CarFilters } from './components/car/CarFilters';
 import { useAuth } from './context/AuthContext';
 import { useCars } from './context/CarContext';
+import { useState } from 'react';
+import { Car as CarType } from './types';
 
 function App() {
   const { user, logout } = useAuth();
-  const { cars, deleteCars, filterCars } = useCars();
+  const { cars, deleteCars, filterCars, editCar, sortCars } = useCars();
+  const [editingCar, setEditingCar] = useState<CarType | null>(null);
+
+  const handleEdit = (car: CarType) => {
+    setEditingCar(car);
+    // Navigate to edit form
+    window.location.href = '/edit-car';
+  };
 
   return (
     <Router>
@@ -37,10 +46,12 @@ function App() {
                       </Link>
                     )}
                     <button
-                      onClick={logout}
-                      className="flex items-center text-gray-600 hover:text-gray-900"
+                      onClick={() => {
+                        logout();
+                        window.location.href = '/';
+                      }}
+                      className="text-gray-600 hover:text-gray-900"
                     >
-                      <LogOut className="h-5 w-5 mr-1" />
                       Logout
                     </button>
                   </>
@@ -58,7 +69,7 @@ function App() {
                       className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 flex items-center"
                     >
                       <ShieldCheck className="h-5 w-5 mr-1" />
-                      Register as Dealer
+                      Sign Up
                     </Link>
                   </>
                 )}
@@ -82,6 +93,16 @@ function App() {
               }
             />
             <Route
+              path="/edit-car"
+              element={
+                user?.role === 'dealer' ? (
+                  <CarForm initialData={editingCar} />
+                ) : (
+                  <Navigate to="/login" />
+                )
+              }
+            />
+            <Route
               path="/"
               element={
                 user ? (
@@ -89,12 +110,15 @@ function App() {
                     // Buyer view with filters
                     <div className="grid grid-cols-4 gap-8">
                       <div className="col-span-1">
-                        <CarFilters onFilterChange={filterCars} />
+                        <CarFilters 
+                          onFilterChange={filterCars}
+                          onSortChange={sortCars}
+                        />
                       </div>
                       <div className="col-span-3">
                         <CarList
                           cars={cars}
-                          onEdit={console.log}
+                          onEdit={() => {}}
                           onDelete={deleteCars}
                           isDealer={false}
                         />
@@ -105,7 +129,7 @@ function App() {
                     <div className="w-full">
                       <CarList
                         cars={cars}
-                        onEdit={console.log}
+                        onEdit={handleEdit}
                         onDelete={deleteCars}
                         isDealer={true}
                       />

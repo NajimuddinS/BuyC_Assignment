@@ -12,6 +12,7 @@ interface CarContextType {
     colors?: string[];
     mileage?: [number, number];
   }) => void;
+  sortCars: (sort: { field: string; direction: 'asc' | 'desc' }) => void;
 }
 
 const CarContext = createContext<CarContextType | null>(null);
@@ -71,6 +72,11 @@ const initialCars: Car[] = [
 export function CarProvider({ children }: { children: ReactNode }) {
   const [cars, setCars] = useState<Car[]>(initialCars);
   const [filteredCars, setFilteredCars] = useState<Car[]>(initialCars);
+  const [currentSort, setCurrentSort] = useState<{ field: string; direction: 'asc' | 'desc' }>({
+    field: 'price',
+    direction: 'asc'
+  });
+  const [currentFilters, setCurrentFilters] = useState<any>({});
 
   const addCar = (carData: Omit<Car, 'id'>) => {
     const newCar = {
@@ -79,7 +85,7 @@ export function CarProvider({ children }: { children: ReactNode }) {
     };
     const updatedCars = [...cars, newCar];
     setCars(updatedCars);
-    setFilteredCars(updatedCars);
+    applyFiltersAndSort(updatedCars, currentFilters, currentSort);
   };
 
   const editCar = (updatedCar: Car) => {
@@ -87,41 +93,58 @@ export function CarProvider({ children }: { children: ReactNode }) {
       car.id === updatedCar.id ? updatedCar : car
     );
     setCars(updatedCars);
-    setFilteredCars(updatedCars);
+    applyFiltersAndSort(updatedCars, currentFilters, currentSort);
   };
 
   const deleteCars = (ids: string[]) => {
     const updatedCars = cars.filter(car => !ids.includes(car.id));
     setCars(updatedCars);
-    setFilteredCars(updatedCars);
+    applyFiltersAndSort(updatedCars, currentFilters, currentSort);
   };
 
-  const filterCars = (filters: {
-    price?: [number, number];
-    colors?: string[];
-    mileage?: [number, number];
-  }) => {
-    let filtered = [...cars];
+  const applyFiltersAndSort = (
+    carsToFilter: Car[],
+    filters: any,
+    sort: { field: string; direction: 'asc' | 'desc' }
+  ) => {
+    let filtered = [...carsToFilter];
 
+    // Apply filters
     if (filters.price) {
       filtered = filtered.filter(
-        car => car.price >= filters.price![0] && car.price <= filters.price![1]
+        car => car.price >= filters.price[0] && car.price <= filters.price[1]
       );
     }
 
     if (filters.colors && filters.colors.length > 0) {
       filtered = filtered.filter(car => 
-        filters.colors!.includes(car.color)
+        filters.colors.includes(car.color)
       );
     }
 
     if (filters.mileage) {
       filtered = filtered.filter(
-        car => car.mileage >= filters.mileage![0] && car.mileage <= filters.mileage![1]
+        car => car.mileage >= filters.mileage[0] && car.mileage <= filters.mileage[1]
       );
     }
 
+    // Apply sorting
+    filtered.sort((a: any, b: any) => {
+      const multiplier = sort.direction === 'asc' ? 1 : -1;
+      return (a[sort.field] - b[sort.field]) * multiplier;
+    });
+
     setFilteredCars(filtered);
+  };
+
+  const filterCars = (filters: any) => {
+    setCurrentFilters(filters);
+    applyFiltersAndSort(cars, filters, currentSort);
+  };
+
+  const sortCars = (sort: { field: string; direction: 'asc' | 'desc' }) => {
+    setCurrentSort(sort);
+    applyFiltersAndSort(cars, currentFilters, sort);
   };
 
   return (
@@ -131,7 +154,8 @@ export function CarProvider({ children }: { children: ReactNode }) {
       addCar, 
       editCar, 
       deleteCars,
-      filterCars 
+      filterCars,
+      sortCars
     }}>
       {children}
     </CarContext.Provider>

@@ -8,6 +8,7 @@ const authSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   name: z.string().min(2).optional(),
+  role: z.enum(['dealer', 'buyer']).optional(),
 });
 
 type AuthFormData = z.infer<typeof authSchema>;
@@ -24,7 +25,11 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
       if (mode === 'login') {
         await login(data.email, data.password);
       } else {
-        await signup(data.email, data.password, data.name || '', 'dealer');
+        if (!data.role) {
+          setError('role', { message: 'Please select a role' });
+          return;
+        }
+        await signup(data.email, data.password, data.name || '', data.role);
       }
       navigate('/');
     } catch (error) {
@@ -38,7 +43,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
     <div className="w-full max-w-md mx-auto">
       <div className="bg-white p-8 rounded-lg shadow-md">
         <h2 className="text-2xl font-bold text-gray-900 mb-6">
-          {mode === 'login' ? 'Sign In' : 'Register as Dealer'}
+          {mode === 'login' ? 'Sign In' : 'Sign Up'}
         </h2>
         
         {mode === 'login' && (
@@ -53,19 +58,50 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {mode === 'signup' && (
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                Name
-              </label>
-              <input
-                {...register('name')}
-                type="text"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-              {errors.name && (
-                <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
-              )}
-            </div>
+            <>
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                  Name
+                </label>
+                <input
+                  {...register('name')}
+                  type="text"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                />
+                {errors.name && (
+                  <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Register as
+                </label>
+                <div className="space-x-4">
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      {...register('role')}
+                      value="dealer"
+                      className="form-radio text-blue-600"
+                    />
+                    <span className="ml-2">Dealer</span>
+                  </label>
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      {...register('role')}
+                      value="buyer"
+                      className="form-radio text-blue-600"
+                    />
+                    <span className="ml-2">Buyer</span>
+                  </label>
+                </div>
+                {errors.role && (
+                  <p className="mt-1 text-sm text-red-600">{errors.role.message}</p>
+                )}
+              </div>
+            </>
           )}
           
           <div>
